@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Manager</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Currency Manager</h2>
+        
+        <!-- Currency Select Section -->
+        <div class="mb-4">
+            <label for="currency">Select Currency:</label>
+            <select id="currency" class="form-control mb-2"></select>
+            <button id="addSelectedCurrency" class="btn btn-primary">Add Selected Currency</button>
+        </div>
+        
+        <!-- New Currency Section -->
+        <div class="mb-4">
+            <label for="newCurrency">New Currency:</label>
+            <input type="text" id="newCurrency" class="form-control mb-2" placeholder="e.g., Gram Altın">
+            <label for="newCurrencyValue">Value:</label>
+            <input type="number" id="newCurrencyValue" class="form-control mb-2" placeholder="e.g., 2500">
+            <button id="addNewCurrency" class="btn btn-success">Add New Currency</button>
+        </div>
+        
+        <!-- Custom Currencies Section -->
+        <div class="mb-4">
+            <label for="customCurrencies">Custom Currencies:</label>
+            <select id="customCurrencies" class="form-control mb-2"></select>
+            <button id="removeCustom" class="btn btn-danger">Remove Selected Custom Currency</button>
+        </div>
+        
+        <!-- Quantity Input and Savings Button -->
+        <div class="mb-4">
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" class="form-control mb-2">
+            <button id="addSavings" class="btn btn-primary">Add Savings</button>
+        </div>
+        
+        <!-- Savings Table -->
+        <h3>Savings</h3>
+        <table id="savingsTable" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Currency</th>
+                    <th>Quantity</th>
+                    <th>Total (₺)</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <h3>Total Savings: <span id="totalSavings">0</span></h3>
+        <br>
+        <!-- Goals Section -->
+        <h3>Goals</h3>
+        <h3>Kalan Miktar: <span id="moneyLeft">0</span></h3>
+        <div class="mb-4">
+            <label for="goalInput">Goal:</label>
+            <input type="text" id="goalInput" class="form-control mb-2" placeholder="e.g., Buy Laptop">
+            <label for="goalAmountInput">Amount (₺):</label>
+            <input type="number" id="goalAmountInput" class="form-control mb-2" placeholder="e.g., 10000">
+            <button id="addGoal" class="btn btn-success">Add Goal</button>
+        </div>
+        
+        <!-- Goals Table -->
+        <table id="goalsTable" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Goal</th>
+                    <th>Amount (₺)</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
