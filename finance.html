@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Finance Manager</title>
+  <!-- Bootstrap 5 Material Theme (Bootswatch Materia) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/materia/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  
+  <style>
+    .income-color { color: #43a047; }
+    .spending-color { color: #e53935; }
+    .card-color { color: #3949ab; }
+    .pointer { cursor: pointer; }
+    .bg-big { font-size: 1.2rem !important; }
+    .bg-income { background-color: #e8f5e9 !important; }
+    .bg-spending { background-color: #ffebee !important; }
+    .bg-card { background-color: #e3eafc !important; }
+    .modal-header-income { background: #43a047; color: #fff; }
+    .modal-header-spending { background: #e53935; color: #fff; }
+    .modal-header-card { background: #3949ab; color: #fff; }
+    .material-shadow { box-shadow: 0 2px 8px rgba(60,60,60,0.08); border-radius: 12px; }
+    .table thead th { background: #f5f5f5; }
+    .icon-btn { border: none; background: none; padding: 0; }
+
+    /* --- Fix list item actions alignment --- */
+    .list-group-item.d-flex {
+      align-items: center;
+    }
+    .list-group-item .item-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-width: 120px;
+      gap: 0.25rem;
+    }
+    .list-group-item .item-actions {
+      flex-shrink: 0;
+    }
+    .list-group-item span {
+      word-break: break-word;
+    }
+
+    /* --- Top action buttons --- */
+    .top-action-btn {
+      font-size: 1.08rem;
+      border-radius: 2rem;
+      padding: 0.5rem 1.25rem;
+      margin-right: 0.5rem;
+      box-shadow: 0 2px 8px rgba(60,60,60,0.08);
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .top-action-btn:last-child {
+      margin-right: 0;
+    }
+    #btn-add-member.top-action-btn {
+      background: #43a047;
+      color: #fff;
+      border: none;
+    }
+    #btn-add-member.top-action-btn:hover {
+      background: #388e3c;
+      color: #fff;
+    }
+    #btn-save-json.top-action-btn {
+      background: #3949ab;
+      color: #fff;
+      border: none;
+    }
+    #btn-save-json.top-action-btn:hover {
+      background: #283593;
+      color: #fff;
+    }
+    #btn-load-json.top-action-btn {
+      background: #fff;
+      color: #3949ab;
+      border: 2px solid #3949ab;
+    }
+    #btn-load-json.top-action-btn:hover {
+      background: #e3eafc;
+      color: #283593;
+      border-color: #283593;
+    }
+
+    /* --- Copy/Paste buttons --- */
+    #btn-copy-month .bi {
+      color: #0d6efd !important;
+    }
+    #btn-paste-month .bi {
+      color: #198754 !important;
+    }
+    #btn-clear-month .bi {
+      color: #e60d0d !important;
+    }
+    #btn-copy-month:disabled .bi, #btn-paste-month:disabled .bi {
+      color: #adb5bd !important;
+    }
+    .btn-circle {
+      border-radius: 50%;
+      width: 2.2rem;
+      height: 2.2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      border: none;
+      background: #f5f5f5;
+      transition: background 0.2s;
+    }
+    .btn-circle:hover {
+      background: #f8d7da;
+    }
+
+    /* --- Years Dropdown Beautification --- */
+    #years-dropdown {
+      font-size: 1.08rem;
+      border-radius: 2rem;
+      padding: 0.5rem 2.2rem 0.5rem 2.5rem;
+      background: #fff;
+      color: #3949ab;
+      border: 2px solid #3949ab;
+      box-shadow: 0 2px 8px rgba(60,60,60,0.08);
+      font-weight: 500;
+      min-width: 110px;
+      max-width: 180px;
+      appearance: none;
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #years-dropdown:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 2px #e3eafc;
+      outline: none;
+    }
+    .years-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .years-dropdown-wrapper .dropdown-icon {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #3949ab;
+      font-size: 1.2rem;
+      pointer-events: none;
+      z-index: 2;
+    }
+    #years-dropdown::-ms-expand {
+      display: none;
+    }
+    #years-dropdown option {
+      color: #222;
+    }
+  </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people-fill me-2"></i>Family Finance Manager</h2>
+    <div>
+      <button class="top-action-btn" id="btn-load-json"><i class="bi bi-folder2-open ms-2"></i>Load Data</button>
+      <button class="top-action-btn" id="btn-save-json"><i class="bi bi-save ms-2"></i>Save Data</button>
+    </div>
+  </div>
+  <div id="family-section">
+    <div class="mb-4">
+      <div class="mb-4">
+        <div class="years-dropdown-wrapper">
+          <i class="bi bi-calendar3 dropdown-icon"></i>
+          <select id="years-dropdown" class="form-select form-select-sm"></select>
+        </div>
+        <span id="copy-paste-btn-group">
+          <button id="btn-clear-month" class="btn-circle btn btn-outline-danger btn-sm ms-2" title="Clear this month's data"><i class="bi bi-trash"></i></button>
+          <button onclick="toggleAllCurrencyMasks()" class="btn-circle btn btn-sm btn-secondary ms-2"><i id="show-hide-icon" class="bi bi-eye-slash"></i></button>
+          <button id="btn-copy-month" class="btn-circle btn btn-outline-info btn-sm ms-2" title="Copy this month's data"><i class="bi bi-clipboard"></i></button>
+          <button id="btn-paste-month" class="btn-circle btn btn-outline-success btn-sm ms-2" title="Paste to this month" disabled><i class="bi bi-clipboard-check"></i></button>
+          </span>
+      </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-2">   
+      <div id="months-row"></div>
+      <div>
+        <button class="top-action-btn" id="btn-add-member"><i class="bi bi-person-plus"></i> Add Member</button>
+      </div>
+    </div>
+    <div id="family-summary" class="mb-4"></div>
+    <h4>Family Members</h4>
+    <div id="members-list" class="mt-2"></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="memberModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="memberModalLabel">Add/Edit Member</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="memberForm">
+          <input type="hidden" id="member-id">
+          <div class="mb-3">
+            <label for="member-name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="member-name" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Income Modal -->
+<div class="modal fade" id="incomeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header-income">
+        <h5 class="modal-title" id="incomeModalLabel">Add/Edit Income</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="incomeForm">
+          <input type="hidden" id="income-member-id">
+          <input type="hidden" id="income-id">
+          <div class="mb-3">
+            <label for="income-name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="income-name" required>
+          </div>
+          <div class="mb-3">
+            <label for="income-value" class="form-label">Value</label>
+            <input type="number" class="form-control" id="income-value" required min="0" step="0.01">
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="income-received">
+            <label class="form-check-label" for="income-received">Received</label>
+          </div>
+          <button type="submit" class="btn btn-success">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spending Modal -->
+<div class="modal fade" id="spendingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header-spending">
+        <h5 class="modal-title" id="spendingModalLabel">Add/Edit Spending</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="spendingForm">
+          <input type="hidden" id="spending-member-id">
+          <input type="hidden" id="spending-id">
+          <div class="mb-3">
+            <label for="spending-name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="spending-name" required>
+          </div>
+          <div class="mb-3">
+            <label for="spending-value" class="form-label">Value</label>
+            <input type="number" class="form-control" id="spending-value" required min="0" step="0.01">
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="spending-payed">
+            <label class="form-check-label" for="spending-payed">Payed</label>
+          </div>
+          <div class="mb-3">
+            <label for="spending-card-id" class="form-label">Credit Card</label>
+            <select class="form-select" id="spending-card-id"></select>
+          </div>
+          <div class="mb-3">
+            <label for="spending-installment" class="form-label">Installments</label>
+            <input type="number" class="form-control" id="spending-installment" min="1" max="12" value="1">
+          </div>
+          <div class="mb-3">
+            <label for="spending-current-installment" class="form-label">Current Installment</label>
+            <input type="number" class="form-control" id="spending-current-installment" min="1" max="12" value="1">
+          </div>
+          <button type="submit" class="btn btn-danger">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card Modal -->
+<div class="modal fade" id="cardModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header modal-header-card">
+        <h5 class="modal-title" id="cardModalLabel">Add/Edit Credit Card</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="cardForm">
+          <input type="hidden" id="card-member-id">
+          <input type="hidden" id="card-id">
+          <div class="mb-3">
+            <label for="card-name" class="form-label">Card Name</label>
+            <input type="text" class="form-control" id="card-name" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Data Model ---
+let familyData = { years: {}, currentYear: getCurrentYearMonth().year, currentMonth: getCurrentYearMonth().month, lastSelectedMonthByYear: {} };
+const STORAGE_KEY = 'familyData';
+let isCurrencyMasked = true; // Add global state for currency masking
+
+function getCurrentYearMonth() {
+  const d = new Date();
+  return { year: String(d.getFullYear()), month: String(d.getMonth() + 1) };
+}
+function getYearList() {
+  let years = Object.keys(familyData.years || {});
+  for (let y = 2025; y <= 2050; ++y) years.push(String(y));
+  years.push(String(new Date().getFullYear()));
+  years = Array.from(new Set(years)).sort();
+  return years;
+}
+function getMonthList(selectedYear) {
+  return Array.from({ length: 12 }, (_, i) => String(i + 1));
+}
+function getMonthName(monthNum) {
+  return new Date(2000, Number(monthNum) - 1, 1).toLocaleString('default', { month: 'short' });
+}
+
+// --- Google Drive API ---
+const CLIENT_ID = '1004280494239-bm24eig1gk63rgvk3in8rjh9bp5gcd6t.apps.googleusercontent.com';
+const FOLDER_ID = '1unoqNS-kFqvnWrjhtK-aoGnAJU063PU1';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const FILE_NAME = "finance_data.json";
+
+async function init() {
+      await new Promise(resolve => gapi.load('client:auth2', resolve));
+      await gapi.client.init({
+        clientId: CLIENT_ID,
+        scope: SCOPES
+      });
+
+      const GoogleAuth = gapi.auth2.getAuthInstance();
+
+      // Otomatik giriş yapılmamışsa, giriş iste
+      if (!GoogleAuth.isSignedIn.get()) {
+        await GoogleAuth.signIn();
+      }
+
+      // Giriş yapıldıktan sonra JSON dosyasını ara ve oku
+      const fileId = await getFileIdByName(FILE_NAME);
+      if (fileId) {
+        const jsonData = await readJSONFromDrive(fileId);
+        document.getElementById("jsonOutput").textContent = JSON.stringify(jsonData, null, 2);
+      } else {
+        document.getElementById("jsonOutput").textContent = "veri.json bulunamadı.";
+      }
+    }
+
+async function getFileIdByName(fileName) {
+  const response = await gapi.client.drive.files.list({
+    q: `name='${fileName}' and trashed=false`,
+    fields: 'files(id, name)'
+  });
+
+  if (response?.result?.files?.length > 0) {
+    return response.result.files[0].id;
+  }
+    
+  alert('Dosya bulunamadı.');
+  return null;
+}
+
+async function readJSONFromDrive(fileId) {
+  const accessToken = gapi.auth.getToken().access_token;
+
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: new Headers({ Authorization: 'Bearer ' + accessToken })
+  });
+
+  const data = await response.json();
+  return data;
+}
+
+async function uploadJSONToDrive() {
+  const fileContent = JSON.stringify(familyData);
+  const fileBlob = new Blob([fileContent], { type: 'application/json' });
+
+  const accessToken = gapi.auth.getToken().access_token;
+
+  // 1. Dosya zaten var mı diye Drive'da ara
+  const searchResponse = await gapi.client.drive.files.list({
+    q: `name='${FILE_NAME}' and trashed=false`,
+    fields: 'files(id, name)'
+  });
+
+  const files = searchResponse.result.files;
+
+  if (files?.length > 0) {
+    // 2. Varsa güncelle
+    const fileId = files[0].id;
+    const metadata = {
+      name: FILE_NAME,
+      mimeType: 'application/json',
+      parents: [ FOLDER_ID ]
+    };
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', fileBlob);
+
+    const updateResponse = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+      method: 'PATCH',
+      headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+      body: form
+    });
+
+    const result = await updateResponse.json();
+    alert('Dosya güncellendi! ID: ' + result.id);
+  } else {
+    const metadata = {
+      name: FILE_NAME,
+      mimeType: 'application/json',
+      parents: [FOLDER_ID]
+    };
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', fileBlob);
+
+    const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+      body: form
+    });
+
+    const result = await createResponse.json();
+    alert('Yeni dosya oluşturuldu! ID: ' + result.id);
+  }
+}
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(familyData));
+  uploadJSONToDrive();
+}
+
+function loadFromStorage() {
+  const data = localStorage.getItem(STORAGE_KEY);
+  if (data) {
+    let loaded = JSON.parse(data);
+    if (loaded.months) {
+      let newYears = {};
+      Object.entries(loaded.months).forEach(([key, value]) => {
+        const [year, month] = key.split('-');
+        if (!newYears[year]) newYears[year] = { months: {} };
+        newYears[year].months[String(Number(month))] = value;
+      });
+      familyData = {
+        years: newYears,
+        currentYear: loaded.currentMonth ? loaded.currentMonth.split('-')[0] : getCurrentYearMonth().year,
+        currentMonth: loaded.currentMonth ? String(Number(loaded.currentMonth.split('-')[1])) : getCurrentYearMonth().month
+      };
+      saveToStorage();
+    } else {
+      familyData = loaded;
+    }
+    if (!familyData.years) familyData.years = {};
+    if (!familyData.currentYear) familyData.currentYear = getCurrentYearMonth().year;
+    if (!familyData.currentMonth) familyData.currentMonth = getCurrentYearMonth().month;
+  }
+  // Always ensure structure
+  if (!familyData.years) familyData.years = {};
+  if (!familyData.currentYear) familyData.currentYear = getCurrentYearMonth().year;
+  if (!familyData.currentMonth) familyData.currentMonth = getCurrentYearMonth().month;
+}
+
+window.onload = init;
+
+// --- Month Handling ---
+function ensureMonthData(year, month) {
+  if (!year) year = familyData.currentYear;
+  if (!month) month = familyData.currentMonth;
+  if (!familyData.years[year]) familyData.years[year] = { months: {} };
+  if (!familyData.years[year].months[month]) {
+    // Copy previous month or start fresh
+    const months = getMonthList(year);
+    const idx = months.indexOf(month);
+    let prev = null;
+    for (let i = idx - 1; i >= 0; --i) if (familyData.years[year].months[months[i]]) { prev = months[i]; break; }
+    if (prev) {
+      familyData.years[year].months[month] = JSON.parse(JSON.stringify(familyData.years[year].months[prev]));
+    } else {
+      familyData.years[year].months[month] = { members: [] };
+    }
+  }
+}
+
+function switchMonth(year, month) {
+  familyData.currentYear = year;
+  familyData.currentMonth = month;
+  // Store last selected month for this year
+  if (!familyData.lastSelectedMonthByYear) familyData.lastSelectedMonthByYear = {};
+  familyData.lastSelectedMonthByYear[year] = month;
+  ensureMonthData(year, month);
+  renderAll();
+  saveToStorage();
+}
+
+// --- Months Row ---
+function renderYearsDropdown() {
+  const years = getYearList();
+  const dropdown = document.getElementById('years-dropdown');
+  const selectedYear = familyData.currentYear || getCurrentYearMonth().year;
+  dropdown.innerHTML = years.map(y => `<option value="${y}"${y === selectedYear ? ' selected' : ''}>${y}</option>`).join('');
+  dropdown.onchange = function () {
+    const year = this.value;
+    const months = getMonthList(year);
+    // Use last selected month for this year if available, else default to '1'
+    let month = (familyData.lastSelectedMonthByYear && familyData.lastSelectedMonthByYear[year]) || '1';
+    if (!familyData.years[year] || !familyData.years[year].months[month]) {
+      month = '1';
+      ensureMonthData(year, month);
+    }
+    switchMonth(year, month);
+  };
+}
+
+function renderMonthsRow() {
+  const selectedYear = familyData.currentYear || getCurrentYearMonth().year;
+  const months = getMonthList(selectedYear);
+  const row = document.getElementById('months-row');
+  row.innerHTML = months.map(m => `<button class="btn btn-sm me-2 ${familyData.currentMonth === m ? 'btn-primary active fw-bold' : 'btn-outline-primary'}" onclick="switchMonth('${selectedYear}','${m}')">${getMonthName(m)}</button>`).join('');
+}
+
+// --- Family Summary ---
+function renderFamilySummary() {
+  let year = familyData.currentYear;
+  let month = familyData.currentMonth;
+  if (!year || !familyData.years[year] || !familyData.years[year].months[month]) {
+    const now = getCurrentYearMonth();
+    year = now.year;
+    month = now.month;
+    ensureMonthData(year, month);
+    familyData.currentYear = year;
+    familyData.currentMonth = month;
+  }
+  ensureMonthData(year, month);
+  let totalIncome = 0, totalSpend = 0;
+  const members = familyData.years[year].months[month].members;
+  members.forEach(m => {
+    totalIncome += (m.incomes || []).filter(i => i.received).reduce((a, b) => a + Number(b.value || 0), 0);
+    totalSpend += sumSpendingsForMonth(m, year, month);
+  });
+  const net = totalIncome - totalSpend;
+  const netColor = net < 0 ? 'spending-color' : 'card-color';
+  document.getElementById('family-summary').innerHTML = `
+    <div class="row g-2">
+      <div class="col-md-4">
+        <div class="card bg-income material-shadow p-3"><span class="fw-bold income-color"><i class="bi bi-plus-circle"></i> Total Income:</span> <span class="fs-5 fw-bold income-color pointer" onclick="toggleCurrencyMask(this, ${totalIncome})">${currency(totalIncome, isCurrencyMasked)}</span></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-spending material-shadow p-3"><span class="fw-bold spending-color"><i class="bi bi-dash-circle"></i> Total Spendings:</span> <span class="fs-5 fw-bold spending-color pointer" onclick="toggleCurrencyMask(this, ${totalSpend})">${currency(totalSpend, isCurrencyMasked)}</span></div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-card material-shadow p-3"><span class="fw-bold ${netColor}"><i class="bi bi-calculator"></i> Net:</span> <span class="fs-5 fw-bold ${netColor} pointer" onclick="toggleCurrencyMask(this, ${net})">${currency(net, isCurrencyMasked)}</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// --- Spendings Sum for Month (installments) ---
+function sumSpendingsForMonth(member, year, month) {
+  return (member.spendings || []).filter(s => s.payed).reduce((a, s) => {
+    if (!s.installment || s.installment < 1) s.installment = 1;
+    return a + Number(s.value) / s.installment;
+  }, 0);
+}
+
+// --- Render Functions ---
+function renderAll() {
+  renderYearsDropdown();
+  renderMonthsRow();
+  renderFamilySummary();
+  renderMembers();
+  setupCopyPasteHandlers();
+}
+
+function renderMembers() {
+  ensureMonthData(familyData.currentYear, familyData.currentMonth);
+  const list = document.getElementById('members-list');
+  const members = familyData.years[familyData.currentYear].months[familyData.currentMonth].members;
+  if (!members.length) {
+    list.innerHTML = '<div class="alert alert-info">No family members. Add one!</div>';
+    return;
+  }
+  list.innerHTML = members.map(member => {
+    const income = (member.incomes || []).filter(i => i.received).reduce((a, b) => a + Number(b.value || 0), 0);
+    const spend = sumSpendingsForMonth(member, familyData.currentYear, familyData.currentMonth);
+    const net = income - spend;
+    const netColor = net < 0 ? 'spending-color' : 'card-color';
+    // Order incomes by name only
+    const incomes = [...(member.incomes || [])].sort((a, b) => a.name.localeCompare(b.name));
+    // Order spendings by cardId (null first), but do not sort by payed
+    const spendings = [...(member.spendings || [])].sort((a, b) => {
+      if ((a.cardId || 0) !== (b.cardId || 0)) return (a.cardId || 0) - (b.cardId || 0);
+      return 0;
+    });
+    return `
+    <div class="card mb-3 material-shadow">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-1"><i class="bi bi-person-circle me-2"></i>${member.name}</h5>
+            <div class="mb-2">
+              <span class="badge bg-big bg-income me-1 income-color pointer" onclick="toggleCurrencyMask(this, ${income})"><i class="bi bi-plus-circle"></i> ${currency(income, isCurrencyMasked)}</span>
+              <span class="badge bg-big bg-spending spending-color pointer" onclick="toggleCurrencyMask(this, ${spend})"><i class="bi bi-dash-circle"></i> ${currency(spend, isCurrencyMasked)}</span>
+              <span class="badge bg-big bg-card ${netColor} pointer" onclick="toggleCurrencyMask(this, ${net})"><i class="bi bi-calculator"></i> ${currency(net, isCurrencyMasked)}</span>
+            </div>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-primary" onclick="openEditMember(${member.id})"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-danger ms-2" onclick="deleteMember(${member.id})"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <h6>Incomes <button class="icon-btn income-color ms-1" onclick="openAddIncome(${member.id})"><i class="bi bi-plus-circle"></i></button></h6>
+            <ul class="col-md-12 list-group mb-2">
+              ${incomes.map(income => `
+                <li class="col-md-12 list-group-item d-flex justify-content-between align-items-center bg-income">
+                  <span><i class="bi bi-cash-coin"></i> ${income.name}</span>
+                  <div class="item-actions ms-2">
+                    <span class="income-color pointer" onclick="toggleCurrencyMask(this, ${income.value})">${currency(income.value, isCurrencyMasked)}</span>
+                    <input type="checkbox" class="form-check-input ms-2" ${income.received ? 'checked' : ''} onchange="toggleIncomeReceived(${member.id},${income.id})" title="Received">
+                    <button class="icon-btn ms-2" onclick="openEditIncome(${member.id},${income.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="icon-btn ms-2" onclick="deleteIncome(${member.id},${income.id})"><i class="bi bi-trash"></i></button>
+                  </div>
+                </li>`).join('')}
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <h6>Spendings <button class="icon-btn spending-color ms-1" onclick="openAddSpending(${member.id})"><i class="bi bi-plus-circle"></i></button></h6>
+            <ul class="col-md-12 list-group mb-2">
+              ${spendings.map(spending => {
+                const card = (member.cards || []).find(c => c.id === spending.cardId);
+                let currentInstallment = 1;
+                if (spending.installment && spending.installment > 1) {
+                  const months = getMonthList(familyData.currentYear);
+                  const idx = months.indexOf(spending.monthKey ? String(Number(spending.monthKey)) : familyData.currentMonth);
+                  const thisIdx = months.indexOf(String(familyData.currentMonth));
+                  if (thisIdx >= idx) {
+                    currentInstallment = thisIdx - idx + 1;
+                  }
+                }
+                return `
+                <li class="col-md-12 list-group-item d-flex justify-content-between align-items-center bg-spending">
+                  <div class="col-md-6">
+                    <div class="col-md-12">
+                      <i class="bi bi-cart-dash"></i> ${spending.name} 
+                    </div>
+                    <div class="col-md-12">
+                     ${card ? ` <span class='badge card-color ms-1'><i class='bi bi-credit-card-2-front'></i> ${card.name}</span>` : ''} 
+                      ${spending.installment > 1 ? ` <span class='badge bg-secondary ms-1'>${spending.currentInstallment > 1 
+                                ? spending.currentInstallment : currentInstallment}/${spending.installment}</span>` : ''}
+                    </div>
+                  </div>
+                  <div class="col-md-3 ms-3"> 
+                    <span class="spending-color pointer" onclick="toggleCurrencyMask(this, ${Number(spending.value) / (spending.installment || 1)})">${currency(Number(spending.value) / (spending.installment || 1), isCurrencyMasked)}</span>
+                    
+                    ${spending.installment > 1 ? `<span class='badge bg-danger pointer' onclick="toggleCurrencyMask(this, ${Number(spending.value)})">${currency(Number(spending.value), isCurrencyMasked)}` : ''}</span>
+                  </div>
+                  <div class="col-md-3">                
+                    <input type="checkbox" class="form-check-input ms-2" ${spending.payed ? 'checked' : ''} onchange="toggleSpendingPayed(${member.id},${spending.id})" title="Payed">
+                    <button class="icon-btn ms-2" onclick="openEditSpending(${member.id},${spending.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="icon-btn ms-2" onclick="deleteSpending(${member.id},${spending.id})"><i class="bi bi-trash"></i></button>
+                  </div>
+                </li>`;
+              }).join('')}
+            </ul>
+            <div class="fw-bold">Total: <span class="spending-color pointer" onclick="toggleCurrencyMask(this, ${spend})">${currency(spend, isCurrencyMasked)}</span></div>
+          </div>
+          <div class="col-md-4">
+            <h6>Credit Cards <button class="icon-btn card-color ms-1" onclick="openAddCard(${member.id})"><i class="bi bi-credit-card-2-front"></i></button></h6>
+            <ul class="col-md-12 list-group mb-2">
+              ${(member.cards || []).map(card => {
+                const cardSpend = (member.spendings || []).filter(s => s.cardId === card.id && s.payed).reduce((a, b) => {
+                  if (!b.installment || b.installment < 1) b.installment = 1;
+                  return a + Number(b.value) / b.installment;
+                }, 0);
+                return `
+                <li class="list-group-item bg-card d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-credit-card-2-front"></i> ${card.name}</span>
+                  <div class="item-actions ms-2">
+                    <span class="spending-color pointer" onclick="toggleCurrencyMask(this, ${cardSpend})">${currency(cardSpend, isCurrencyMasked)}</span>
+                    <button class="icon-btn ms-2" onclick="openEditCard(${member.id},${card.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="icon-btn ms-2" onclick="deleteCard(${member.id},${card.id})"><i class="bi bi-trash"></i></button>
+                  </div>
+                </li>`
+              }).join('')}
+            </ul>
+            <div class="fw-bold">All Cards Total: <span class="spending-color pointer" onclick="toggleCurrencyMask(this, '${(member.spendings || []).filter(s => s.cardId && s.payed).reduce((a, b) => {
+              if (!b.installment || b.installment < 1) b.installment = 1;
+              return a + Number(b.value) / b.installment;
+            }, 0)}')">${currency((member.spendings || []).filter(s => s.cardId && s.payed).reduce((a, b) => {
+              if (!b.installment || b.installment < 1) b.installment = 1;
+              return a + Number(b.value) / b.installment;
+            }, 0), isCurrencyMasked)}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+// --- CRUD and Toggle Functions ---
+document.getElementById('btn-add-member').onclick = () => {
+  document.getElementById('member-id').value = '';
+  document.getElementById('member-name').value = '';
+  new bootstrap.Modal(document.getElementById('memberModal')).show();
+};
+
+function toggleSpendingPayed(memberId, spendingId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const member = familyData.years[year]?.months[month]?.members?.find(m => m.id === memberId);
+  const spending = member?.spendings?.find(s => s.id === spendingId);
+  
+  if (spending) {
+    spending.payed = !spending.payed;
+    saveToStorage();
+    renderAll();
+  }
+}
+
+function toggleIncomeReceived(memberId, incomeId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.incomes) {
+    const income = member.incomes.find(i => i.id === incomeId);
+    if (income) {
+      income.received = !income.received;
+      saveToStorage();
+      renderAll();
+    }
+  }
+}
+
+function openAddIncome(memberId) {
+  document.getElementById('income-member-id').value = memberId;
+  document.getElementById('income-id').value = '';
+  document.getElementById('income-name').value = '';
+  document.getElementById('income-value').value = '';
+  document.getElementById('income-received').checked = true;
+  new bootstrap.Modal(document.getElementById('incomeModal')).show();
+}
+function openEditIncome(memberId, incomeId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.incomes) {
+    const income = member.incomes.find(i => i.id === incomeId);
+    if (income) {
+      document.getElementById('income-member-id').value = memberId;
+      document.getElementById('income-id').value = incomeId;
+      document.getElementById('income-name').value = income.name;
+      document.getElementById('income-value').value = income.value;
+      document.getElementById('income-received').checked = !!income.received;
+      new bootstrap.Modal(document.getElementById('incomeModal')).show();
+    }
+  }
+}
+function deleteIncome(memberId, incomeId) {
+  if (!confirm('Are you sure you want to delete this income?')) return;
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.incomes) {
+    member.incomes = member.incomes.filter(i => i.id !== incomeId);
+    saveToStorage();
+    renderAll();
+  }
+}
+function openAddSpending(memberId) {
+  document.getElementById('spending-member-id').value = memberId;
+  document.getElementById('spending-id').value = '';
+  document.getElementById('spending-name').value = '';
+  document.getElementById('spending-value').value = '';
+  document.getElementById('spending-payed').checked = true;
+  document.getElementById('spending-card-id').value = '';
+  document.getElementById('spending-installment').value = 1;
+  document.getElementById('spending-current-installment').value = 1;
+  new bootstrap.Modal(document.getElementById('spendingModal')).show();
+}
+function openEditSpending(memberId, spendingId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.spendings) {
+    const spending = member.spendings.find(s => s.id === spendingId);
+    if (spending) {
+      document.getElementById('spending-member-id').value = memberId;
+      document.getElementById('spending-id').value = spendingId;
+      document.getElementById('spending-name').value = spending.name;
+      document.getElementById('spending-value').value = spending.value;
+      document.getElementById('spending-payed').checked = !!spending.payed;
+      document.getElementById('spending-card-id').value = spending.cardId || '';
+      document.getElementById('spending-installment').value = spending.installment || 1;
+      document.getElementById('spending-current-installment').value = spending.currentInstallment || 1;
+      new bootstrap.Modal(document.getElementById('spendingModal')).show();
+    }
+  }
+}
+function deleteSpending(memberId, spendingId) {
+  if (!confirm('Are you sure you want to delete this spending?')) return;
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.spendings) {
+    member.spendings = member.spendings.filter(s => s.id !== spendingId);
+    saveToStorage();
+    renderAll();
+  }
+}
+function openAddCard(memberId) {
+  document.getElementById('card-member-id').value = memberId;
+  document.getElementById('card-id').value = '';
+  document.getElementById('card-name').value = '';
+  new bootstrap.Modal(document.getElementById('cardModal')).show();
+}
+function openEditCard(memberId, cardId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.cards) {
+    const card = member.cards.find(c => c.id === cardId);
+    if (card) {
+      document.getElementById('card-member-id').value = memberId;
+      document.getElementById('card-id').value = cardId;
+      document.getElementById('card-name').value = card.name;
+      new bootstrap.Modal(document.getElementById('cardModal')).show();
+    }
+  }
+}
+function deleteCard(memberId, cardId) {
+  if (!confirm('Are you sure you want to delete this card?')) return;
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.cards) {
+    member.cards = member.cards.filter(c => c.id !== cardId);
+    saveToStorage();
+    renderAll();
+  }
+}
+function openEditMember(memberId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member) {
+    document.getElementById('member-id').value = memberId;
+    document.getElementById('member-name').value = member.name;
+    new bootstrap.Modal(document.getElementById('memberModal')).show();
+  }
+}
+function deleteMember(memberId) {
+  if (!confirm('Are you sure you want to delete this member?')) return;
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  let members = familyData.years[year].months[month].members;
+  familyData.years[year].months[month].members = members.filter(m => m.id !== memberId);
+  saveToStorage();
+  renderAll();
+}
+
+function renderInit() {
+  loadFromStorage();
+  if (!familyData.currentYear) familyData.currentYear = getCurrentYearMonth().year;
+  if (!familyData.currentMonth) familyData.currentMonth = getCurrentYearMonth().month;
+  ensureMonthData(familyData.currentYear, familyData.currentMonth);
+  renderAll();
+}
+renderInit();
+
+// --- Utility Functions ---
+function generateId(list) {
+  return list.length ? Math.max(...list.map(x => x.id)) + 1 : 1;
+}
+function currency(val, shouldMask = false) {
+  if (shouldMask) return '••••••••';
+  return '₺' + Number(val).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+}
+
+// --- Modal Save Logic Fixes ---
+document.getElementById('incomeForm').onsubmit = function(e) {
+  e.preventDefault();
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const memberId = Number(document.getElementById('income-member-id').value);
+  const incomeId = document.getElementById('income-id').value;
+  const name = document.getElementById('income-name').value;
+  const value = Number(document.getElementById('income-value').value);
+  const received = document.getElementById('income-received').checked;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (!member.incomes) member.incomes = [];
+  if (incomeId) {
+    // Edit
+    const income = member.incomes.find(i => i.id == incomeId);
+    if (income) {
+      income.name = name;
+      income.value = value;
+      income.received = received;
+    }
+  } else {
+    // Add
+    member.incomes.push({ id: generateId(member.incomes), name, value, received });
+  }
+  saveToStorage();
+  renderAll();
+  bootstrap.Modal.getInstance(document.getElementById('incomeModal')).hide();
+};
+document.getElementById('spendingForm').onsubmit = function(e) {
+  e.preventDefault();
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const memberId = Number(document.getElementById('spending-member-id').value);
+  const spendingId = document.getElementById('spending-id').value;
+  const name = document.getElementById('spending-name').value;
+  const value = Number(document.getElementById('spending-value').value);
+  const payed = document.getElementById('spending-payed').checked;
+  const cardId = document.getElementById('spending-card-id').value ? Number(document.getElementById('spending-card-id').value) : null;
+  const installment = Number(document.getElementById('spending-installment').value) || 1;
+  const currentInstallment = Number(document.getElementById('spending-current-installment').value) || 1;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (!member.spendings) member.spendings = [];
+  if (spendingId) {
+    // Edit
+    const spending = member.spendings.find(s => s.id == spendingId);
+    if (spending) {
+      spending.name = name;
+      spending.value = value;
+      spending.payed = payed;
+      spending.cardId = cardId;
+      spending.installment = installment;
+      spending.currentInstallment = currentInstallment;
+    }
+  } else {
+    // Add
+    member.spendings.push({ id: generateId(member.spendings), name, value, payed, cardId, installment, currentInstallment: currentInstallment, monthKey: month });
+  }
+  saveToStorage();
+  renderAll();
+  bootstrap.Modal.getInstance(document.getElementById('spendingModal')).hide();
+};
+
+// --- Populate Card Dropdown on Spending Modal ---
+function populateSpendingCardDropdown(memberId, selectedCardId) {
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  const select = document.getElementById('spending-card-id');
+  if (!member || !member.cards || !member.cards.length) {
+    select.innerHTML = '<option value="">No cards</option>';
+    select.value = '';
+    return;
+  }
+  select.innerHTML = '<option value="">None</option>' + member.cards.map(card => `<option value="${card.id}">${card.name}</option>`).join('');
+  select.value = selectedCardId || '';
+}
+
+// Patch openAddSpending and openEditSpending to call this
+const _openAddSpending = openAddSpending;
+openAddSpending = function(memberId) {
+  _openAddSpending(memberId);
+  populateSpendingCardDropdown(memberId, '');
+};
+const _openEditSpending = openEditSpending;
+openEditSpending = function(memberId, spendingId) {
+  _openEditSpending(memberId, spendingId);
+  // Find the cardId for this spending
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (member && member.spendings) {
+    const spending = member.spendings.find(s => s.id === spendingId);
+    if (spending) {
+      populateSpendingCardDropdown(memberId, spending.cardId);
+    }
+  }
+};
+
+// --- Member Modal Save Logic ---
+document.getElementById('memberForm').onsubmit = function(e) {
+  e.preventDefault();
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const memberId = document.getElementById('member-id').value;
+  const name = document.getElementById('member-name').value;
+  const members = familyData.years[year].months[month].members;
+  if (memberId) {
+    // Edit
+    const member = members.find(m => m.id == memberId);
+    if (member) {
+      member.name = name;
+    }
+  } else {
+    // Add
+    members.push({ id: generateId(members), name, incomes: [], spendings: [], cards: [] });
+  }
+  saveToStorage();
+  renderAll();
+  bootstrap.Modal.getInstance(document.getElementById('memberModal')).hide();
+};
+
+// --- JSON Export/Import ---
+document.getElementById('btn-save-json').onclick = function() {
+  const dataStr = JSON.stringify(familyData, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'family-finance.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
+};
+
+document.getElementById('btn-load-json').onclick = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const data = JSON.parse(evt.target.result);
+        familyData = data;
+        saveToStorage();
+        renderAll();
+        alert('Data loaded successfully!');
+      } catch (err) {
+        alert('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+};
+
+// Add copy/paste buttons to the right of years dropdown after DOM is ready
+let copiedMonthData = null;
+function setupCopyPasteHandlers() {
+  const copyBtn = document.getElementById('btn-copy-month');
+  const pasteBtn = document.getElementById('btn-paste-month');
+  const clearBtn = document.getElementById('btn-clear-month');
+  if (!copyBtn || !pasteBtn || !clearBtn) return;
+  copyBtn.onclick = function() {
+    const year = familyData.currentYear;
+    const month = familyData.currentMonth;
+    if (familyData.years[year] && familyData.years[year].months[month]) {
+      copiedMonthData = JSON.parse(JSON.stringify(familyData.years[year].months[month]));
+      pasteBtn.disabled = false;
+    }
+  };
+  pasteBtn.onclick = function() {
+    if (!copiedMonthData) return;
+    if (!confirm('This will override all data for the selected year and month. Continue?')) return;
+    const year = familyData.currentYear;
+    const month = familyData.currentMonth;
+    familyData.years[year].months[month] = JSON.parse(JSON.stringify(copiedMonthData));
+    copiedMonthData = null;      
+    pasteBtn.disabled = true;
+    saveToStorage();
+    renderAll();
+  };
+  clearBtn.onclick = function() {
+    if (!confirm('This will remove all data for the selected year and month. Continue?')) return;
+    const year = familyData.currentYear;
+    const month = familyData.currentMonth;
+    if (familyData.years[year] && familyData.years[year].months[month]) {
+      familyData.years[year].months[month] = { members: [] };
+      saveToStorage();
+      renderAll();
+    }
+  };
+}
+
+// Ensure Enter key submits modal forms for add/edit
+['memberForm', 'incomeForm', 'spendingForm', 'cardForm'].forEach(formId => {
+  const form = document.getElementById(formId);
+  if (form) {
+    // Remove any accidental type=button from inputs
+    Array.from(form.querySelectorAll('input')).forEach(input => {
+      if (input.type === 'button') input.type = 'text';
+    });
+    // The Save button should be type=submit
+    const saveBtn = form.querySelector('button[type=submit],button:not([type])');
+    if (saveBtn) saveBtn.type = 'submit';
+    // No-op: default form submit already works with Enter
+  }
+});
+
+// Auto-focus first input when modal is shown
+['memberModal', 'incomeModal', 'spendingModal', 'cardModal'].forEach(modalId => {
+  const modalEl = document.getElementById(modalId);
+  if (modalEl) {
+    modalEl.addEventListener('shown.bs.modal', function() {
+      const firstInput = modalEl.querySelector('input:not([type=hidden]):not([disabled]),select,textarea');
+      if (firstInput) firstInput.focus();
+    });
+  }
+});
+
+document.getElementById('cardForm').onsubmit = function(e) {
+  e.preventDefault();
+  const year = familyData.currentYear;
+  const month = familyData.currentMonth;
+  const memberId = Number(document.getElementById('card-member-id').value);
+  const cardId = document.getElementById('card-id').value;
+  const name = document.getElementById('card-name').value;
+  const members = familyData.years[year].months[month].members;
+  const member = members.find(m => m.id === memberId);
+  if (!member.cards) member.cards = [];
+  if (cardId) {
+    // Edit
+    const card = member.cards.find(c => c.id == cardId);
+    if (card) {
+      card.name = name;
+    }
+  } else {
+    // Add
+    member.cards.push({ id: generateId(member.cards), name });
+  }
+  saveToStorage();
+  renderAll();
+  bootstrap.Modal.getInstance(document.getElementById('cardModal')).hide();
+};
+
+// Add toggle currency mask function
+function toggleCurrencyMask(element, originalValue) {
+  const currentText = element.textContent?.trim();
+  if (currentText === '••••••••') {
+    // Unmask
+    if (originalValue >= 0) {
+        element.textContent = currency(Number(originalValue));
+      }
+  } else {
+    // Mask
+    element.textContent = '••••••••';
+  }
+}
+
+function toggleAllCurrencyMasks() {
+  isCurrencyMasked = !isCurrencyMasked;
+  if(isCurrencyMasked) {
+    document.getElementById('show-hide-icon').classList.remove('bi-eye');
+    document.getElementById('show-hide-icon').classList.add('bi-eye-slash');
+  } else {
+    document.getElementById('show-hide-icon').classList.remove('bi-eye-slash');
+    document.getElementById('show-hide-icon').classList.add('bi-eye');
+  }
+  renderAll();
+}
+
+</script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
